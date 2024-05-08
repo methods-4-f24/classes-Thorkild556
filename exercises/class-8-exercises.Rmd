@@ -18,13 +18,84 @@ library(rethinking)
 
 Do all the easy exercises from Chapter 9: **9E1** through **9E6**.
 
+Which of the following is a requirement of the simple Metropolis algorithm?
+(1) The parameters must be discrete.
+(2) The likelihood function must be Gaussian.
+(3) The proposal distribution must be symmetric.
+
+1 (in the example of the islands)
+
+9E2. Gibbs sampling is more efficient than the Metropolis algorithm. How does it achieve this extra
+efficiency? Are there any limitations to the Gibbs sampling strategy?
+
+the gibbs sampling algorithm can "weigh the coin" after the current parameter values in order to explore the space more efficiently. however this strategy correlates the samples highly, and can end up taking a long time to reach the "whole" parameter space.
+
+9E3. Which sort of parameters can Hamiltonian Monte Carlo not handle? Can you explain why?
+
+discreete, since it is based on physics and mooving in a continueous space.
+
+
+9E4. Explain the difference between the effective number of samples, n_eff as calculated by Stan,
+and the actual number of samples.
+
+the effective number of samples is only an estimation of the amount of independent samples from the distribution, this is taken from all the samples made from the simulation
+
+9E5. Which value should Rhat approach, when a chain is sampling the posterior distribution correctly?
+
+it should approach 1 since it is the ratio of variances between the chains.
+
+9E6. Sketch a good trace plot for a Markov chain, one that is effectively sampling from the posterior
+distribution. What is good about its shape? Then sketch a trace plot for a malfunctioning Markov
+chain. What about its shape indicates malfunction?
+
+it should be about the same variance all the way though. So a bad one would have uneven variance "over time"
+
 ### Medium
 
 #### 9M1
 
 ```{r}
+# remove.packages("rstan")
+# if (file.exists(".RData")) file.remove(".RData")
+# install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+# 
+example(stan_model, package = "rstan", run.dontrun = TRUE)
+```
+
+
+
+```{r}
 
 # Your solution here
+
+library(rethinking)
+# library(rstan)
+# library(cmdstanr)
+
+
+data(rugged)
+d <- rugged
+d$log_gdp <- log(d$rgdppc_2000)
+dd <- d[ complete.cases(d$rgdppc_2000) , ]
+dd$log_gdp_std <- dd$log_gdp / mean(dd$log_gdp)
+dd$rugged_std <- dd$rugged / max(dd$rugged)
+dd$cid <- ifelse( dd$cont_africa==1 , 1 , 2 )
+
+dat_slim <- list(
+  log_gdp_std = dd$log_gdp_std,
+  rugged_std = dd$rugged_std,
+  cid = as.integer( dd$cid )
+)
+str(dat_slim)
+
+m9.1 <- ulam(
+alist(
+  log_gdp_std ~ dnorm( mu , sigma ),
+  mu <- a[cid] + b[cid]*( rugged_std - 0.215 ),
+  a[cid] ~ dnorm( 1 , 0.1 ),
+  b[cid] ~ dnorm( 0 , 0.3 ),
+  sigma ~ dexp( 1 )
+), data=dat_slim )
 
 ```
 
@@ -32,7 +103,7 @@ Do all the easy exercises from Chapter 9: **9E1** through **9E6**.
 
 ```{r}
 
-# Your solution herre
+# Your solution here
 
 ```
 
